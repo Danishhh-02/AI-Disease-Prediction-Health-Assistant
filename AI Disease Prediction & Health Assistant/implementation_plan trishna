@@ -1,0 +1,146 @@
+# Implementation Plan - AI Disease Prediction & Health Assistant
+
+Build a production-grade, full-stack AI/ML Web Application for Disease Prediction and Health Information guidance using FastAPI backend, Scikit-Learn/XGBoost ML pipeline with Explainable AI (SHAP/Feature Importance), Streamlit interactive frontend, and SQLite/Supabase PostgreSQL database storage.
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Medical Disclaimer & Safety Boundary**:
+> The application strictly functions as an educational decision-support tool. It will include explicit disclaimers on every prediction page and emergency notices when critical symptoms (e.g., chest pain, severe dyspnea, sudden numbness) are selected.
+
+> [!NOTE]
+> **Dual Storage Architecture**:
+> To ensure the application works out-of-the-box locally without requiring external cloud database setup, backend data storage will use an auto-initializing SQLite database (`database/app.db`) populated with realistic seed dataset and disease knowledge base, with seamless compatibility for Supabase PostgreSQL via `.env` configuration.
+
+## Proposed System Architecture
+
+```
+                                  USER
+                                    │
+                                    ▼
+                          ┌──────────────────┐
+                          │  STREAMLIT UI    │
+                          │ (Multi-page App) │
+                          └────────┬─────────┘
+                                   │  HTTP / REST API
+                                   ▼
+                          ┌──────────────────┐
+                          │   FASTAPI BACKEND│
+                          │  (Auth, API, DB) │
+                          └────────┬─────────┘
+                                   │
+             ┌─────────────────────┼─────────────────────┐
+             ▼                     ▼                     ▼
+       ┌───────────┐         ┌───────────┐         ┌───────────┐
+       │ ML Models │         │ Database  │         │  Health   │
+       │ Engine    │         │ (SQLite / │         │ Knowledge │
+       │ (SHAP/XGB)│         │ Supabase) │         │ Base      │
+       └───────────┘         └───────────┘         └───────────┘
+```
+
+---
+
+## Proposed Changes
+
+### 1. Data & Machine Learning Pipeline (`ml/`, `data/`, `models/`)
+
+#### [NEW] [dataset.csv](file:///c:/Users/Dell/OneDrive/Desktop/AI%20Disease%20Prediction%20%26%20Health%20Assistant/data/dataset.csv)
+- Clean, realistic multi-class disease symptom dataset containing 40+ medical conditions across 130+ symptom features (e.g., Malaria, Dengue, Diabetes, Hypertension, Pneumonia, Allergy, Migraine, Typhoid, Tuberculosis, GERD, Hepatitis, etc.).
+
+#### [NEW] [data_preprocessing.py](file:///c:/Users/Dell/OneDrive/Desktop/AI%20Disease%20Prediction%20%26%20Health%20Assistant/ml/data_preprocessing.py)
+- Handles missing value detection, duplicate removal, feature encoding, symptom feature vector construction, and train/test stratified split.
+
+#### [NEW] [train.py](file:///c:/Users/Dell/OneDrive/Desktop/AI%20Disease%20Prediction%20%26%20Health%20Assistant/ml/train.py)
+- Trains and evaluates 5 candidate algorithms:
+  1. Logistic Regression
+  2. Decision Tree Classifier
+  3. Random Forest Classifier
+  4. Support Vector Machine (SVM)
+  5. XGBoost Classifier
+- Evaluates metrics: Accuracy, Precision, Recall, F1 (macro/weighted), Confusion Matrix, Inference Time.
+- Selects the best performing model, saves artifacts (`model.pkl`, `encoder.pkl`, `metadata.json`) into `models/`.
+
+#### [NEW] [predict.py](file:///c:/Users/Dell/OneDrive/Desktop/AI%20Disease%20Prediction%20%26%20Health%20Assistant/ml/predict.py)
+- Ingests selected symptom vectors, outputs top-K ranked predicted conditions with probability scores, emergency alerts for critical symptoms, and feature importance / SHAP explanations.
+
+---
+
+### 2. Database & Data Layer (`database/`, `backend/services/`)
+
+#### [NEW] [schema.sql](file:///c:/Users/Dell/OneDrive/Desktop/AI%20Disease%20Prediction%20%26%20Health%20Assistant/database/schema.sql)
+- PostgreSQL/SQLite schema: `users`, `profiles`, `symptoms`, `diseases`, `predictions`, `prediction_symptoms`, `feedback`, `model_versions`, `admin_logs`.
+
+#### [NEW] [db.py](file:///c:/Users/Dell/OneDrive/Desktop/AI%20Disease%20Prediction%20%26%20Health%20Assistant/database/db.py)
+- Unified DB connection manager supporting SQLite & Supabase PostgreSQL auto-seeding with default Admin user, 130+ symptoms catalog, and structured disease knowledge base.
+
+---
+
+### 3. Backend Engine (`backend/`)
+
+#### [NEW] [main.py](file:///c:/Users/Dell/OneDrive/Desktop/AI%20Disease%20Prediction%20%26%20Health%20Assistant/backend/main.py)
+- FastAPI entry point with CORS middleware, request logging, startup event for database initialization, and router aggregation.
+
+#### [NEW] [auth.py](file:///c:/Users/Dell/OneDrive/Desktop/AI%20Disease%20Prediction%20%26%20Health%20Assistant/backend/routes/auth.py)
+- JWT token authentication, user registration, login, profile management, password hash handling, and role verification (User / Admin).
+
+#### [NEW] [symptoms.py](file:///c:/Users/Dell/OneDrive/Desktop/AI%20Disease%20Prediction%20%26%20Health%20Assistant/backend/routes/symptoms.py)
+- Symptom list retrieval, category search, auto-complete helper, free-text symptom matching.
+
+#### [NEW] [prediction.py](file:///c:/Users/Dell/OneDrive/Desktop/AI%20Disease%20Prediction%20%26%20Health%20Assistant/backend/routes/prediction.py)
+- POST `/api/predict`: Runs ML pipeline, logs prediction into history table, returns top predictions, probabilities, safety disclaimers, and SHAP key contributing symptoms.
+- GET `/api/predictions`: User prediction history retrieval.
+- DELETE `/api/predictions/{id}`: Prediction record deletion.
+
+#### [NEW] [diseases.py](file:///c:/Users/Dell/OneDrive/Desktop/AI%20Disease%20Prediction%20%26%20Health%20Assistant/backend/routes/diseases.py)
+- Structured disease knowledge base endpoints (Overview, common symptoms, general precautions, when to seek care, verified source).
+
+#### [NEW] [admin.py](file:///c:/Users/Dell/OneDrive/Desktop/AI%20Disease%20Prediction%20%26%20Health%20Assistant/backend/routes/admin.py)
+- System metrics (Total Users, Predictions, Feedback counts).
+- ML Model comparison metrics table, confusion matrix, classification report, inference time analysis.
+- Dataset upload/validation endpoint.
+- User management (View, role promotion/demotion, deactivate).
+
+#### [NEW] [feedback.py](file:///c:/Users/Dell/OneDrive/Desktop/AI%20Disease%20Prediction%20%26%20Health%20Assistant/backend/routes/feedback.py)
+- Endpoints to record user feedback on predictions.
+
+---
+
+### 4. Frontend Application (`frontend/`)
+
+#### [NEW] [app.py](file:///c:/Users/Dell/OneDrive/Desktop/AI%20Disease%20Prediction%20%26%20Health%20Assistant/frontend/app.py)
+- Streamlit application main entry point featuring modern medical glassmorphism styling, header, sidebar navigation, authentication session state handling, and safety banner.
+
+#### [NEW] Streamlit Pages (`frontend/pages/`)
+- `01_🏠_Home.py`: Landing hero page, platform capabilities, quick start workflow visualizer.
+- `02_🩺_Symptom_Checker.py`: Searchable multi-select symptom picker, category filters, emergency scanner, interactive Plotly probability bar charts, SHAP feature importance chart, detailed disease information drawer.
+- `03_📋_History.py`: User prediction history timeline, symptom details modal, deletion, export functionality.
+- `04_📚_Health_Library.py`: Searchable condition library, precautions, and emergency guidance.
+- `05_👤_Profile.py`: User profile stats and account management.
+- `06_⚡_Admin_Dashboard.py`: Comprehensive admin control panel with interactive Plotly analytics, model comparison metrics tables, confusion matrices, user management, and dataset inspection.
+- `07_🔐_Login.py`: User authentication, registration, role switcher (Demo admin toggle available).
+
+---
+
+### 5. Configuration & Requirements (`requirements.txt`, `.env.example`, `README.md`)
+
+#### [NEW] [requirements.txt](file:///c:/Users/Dell/OneDrive/Desktop/AI%20Disease%20Prediction%20%26%20Health%20Assistant/requirements.txt)
+- `fastapi`, `uvicorn`, `streamlit`, `scikit-learn`, `xgboost`, `pandas`, `numpy`, `matplotlib`, `plotly`, `joblib`, `pydantic`, `python-jose`, `passlib`, `python-dotenv`, `requests`.
+
+---
+
+## Verification Plan
+
+### Automated Tests
+1. Run dataset preparation and ML model training script (`python ml/train.py`). Verify `models/model.pkl`, `models/encoder.pkl`, and `models/metadata.json` are generated with valid accuracy/F1 metrics.
+2. Run backend API tests (`python -m pytest tests/` or custom test runner script `python tests/test_backend.py`) to verify:
+   - FastAPI server startup
+   - Auth endpoints (Register/Login JWT issue)
+   - Symptoms endpoint
+   - Predict endpoint output format matching SRS specification
+   - Admin analytics endpoint data structure
+
+### Manual & Visual Verification
+1. Launch FastAPI backend using `uvicorn backend.main:app --port 8000`.
+2. Launch Streamlit frontend using `streamlit run frontend/app.py`.
+3. Test Symptom Selection -> Analysis -> Probability Visualization (Plotly) -> Disease details -> Feedback flow.
+4. Access Admin Dashboard -> ML Model Comparison metrics -> Confusion Matrix -> User Analytics.

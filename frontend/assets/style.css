@@ -1,0 +1,37 @@
+/* ==========================================================================
+   AI Disease Prediction & Health Assistant - Master Healthcare Theme
+   Aesthetics: Modern Medical Teal, Clinical Navy & Subtle Healing Green
+   Designed for Final-Year B.Tech Computer Science AI & Data Science
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg-main: #F8FAFC;
+  --card-bg: #FFFFFF;
+  --primary-teal: #0D9488;
+  --primary-teal-dark: #0F766E;
+  --primary-teal-light: #F0FDFA;
+  --medical-blue: #0284C7;
+  --medical-blue-dark: #1E3A8A;
+  --medical-blue-light: #E0F2FE;
+  --clinical-green: #10B981;
+  --clinical-green-light: #ECFDF5;
+  --danger-red: #EF4444;
+  --danger-red-light: #FEF2F2;
+  --warning-amber: #F59E0B;
+  --warning-amber-light: #FFFBEB;
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #94A3B8;
+  --border-subtle: #E2E8F0;
+  --border-accent: #99F6E4;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  margin: 0;
+  padding: 0;
+}
